@@ -1,5 +1,6 @@
 ###THIS IS A SCRIPT TO USE nlxr PACKAGE FOR NETLOGO MODEL STATISTICS AND DOCUMENTATION
 #reference: Author(s) Jan Salecker jsaleck@gwdg.de 
+# source code link: https://besjournals.onlinelibrary.wiley.com/action/downloadSupplement?doi=10.1111%2F2041-210X.13286&file=mee313286-sup-0001-suppinfo.pdf
 # install the package if never
 install.packages("nlrx")
 ##### bug solution unixtool
