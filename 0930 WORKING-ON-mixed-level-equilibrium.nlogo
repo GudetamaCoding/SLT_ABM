@@ -1,24 +1,20 @@
-;; set global variables for the lake ecosystem----------------------------------------------------------------------------------------------------------------------------------------
+;`@model shallow lake ecosystem (Netlogo model)
+;`@author Yanjie Zhao
 
-globals [
-;; environmental------------------------------------------------------------------------------------------------------------------------
-  ; water-temperature  (in slider)
-  water-depth
-  ;;global-turbidity  (not in use)                                              ;; NTU,  turbidity is a part of water quality
-;; nutrient
-  ; total-nutrient-concentration
-  global-free-nutrient-concentration                                     ;; Variable Nf, nutrient in water: P is mainly evaluated as a nutrient indicator; mg/L
-  nutrient-concentration-in-phytoplankton                           ;; Np, default value= 0.01, g g-1
-  nutrient-concentration-in-zooplankton
-  nutrient-concentration-in-fish
-
-;; time scale-----------------------------------------------------------------------------------------------------------------------------                                                             ;; time scale  calculated by ticks
-  days
-;; biological function groups------------------------------------------------------------------------------------------------------------
-  ;; PHYTOPLANKTON ;;-------------------------------------------------
-  basic-photosynthesis-rate                                         ;; function of temperature; generic growing rate, applied on cynaobacteria, diatom and green algae (Goldman, 1974)
-  phytoplankton-size-default
-  cyanobacteria-start-amount
+;`@global Global variables
+;`@details There are two parts of global variables, to support environmental and biological settings respectively. 
+;`@code TRUE
+globals [ water-depth ] ; the depth of the lake and the lake is assumed to be flat in bottom
+globals [ water-temperature ]  
+globals [ total-nutrient-concentration ]  ; The assumption is total nutrient and water volumn is constant in the whole system. 
+globals [ global-free-nutrient-concentration ]  ; Variable Nf, nutrient in water: P is mainly evaluated as a nutrient indicator; mg/L
+globals [ nutrient-concentration-in-phytoplankton ]  ; Np, default value= 0.01, g g-1
+globals [ nutrient-concentration-in-zooplankton]
+globals [ nutrient-concentration-in-fish]                                                             ;; time scale  calculated by ticks
+globals [ days ] ; time scale
+globals [ basic-photosynthesis-rate ]                                        ;; function of temperature; generic growing rate, applied on cynaobacteria, diatom and green algae (Goldman, 1974)
+globals [ phytoplankton-size-default ]
+globals [ cyanobacteria-start-amount ]
   cyanobacteria-amount                                              ;; cyanobacteria initial agents number
   diatom-start-amount                                               ;; diatom initial agents number
   phytopolankton-amount                                                      ;; sum of diatom, cyanobacteria and green algae
