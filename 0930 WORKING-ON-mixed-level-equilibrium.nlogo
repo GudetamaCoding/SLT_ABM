@@ -1,69 +1,25 @@
-;; set global variables for the lake ecosystem----------------------------------------------------------------------------------------------------------------------------------------
+;`@model shallow lake ecosystem (Netlogo model)
+;`@author Yanjie Zhao
 
-globals [
-;; environmental------------------------------------------------------------------------------------------------------------------------
-  ; water-temperature  (in slider)
-  water-depth
-  ;;global-turbidity  (not in use)                                              ;; NTU,  turbidity is a part of water quality
-;; nutrient
-  ; total-nutrient-concentration
-  global-free-nutrient-concentration                                     ;; Variable Nf, nutrient in water: P is mainly evaluated as a nutrient indicator; mg/L
-  nutrient-concentration-in-phytoplankton                           ;; Np, default value= 0.01, g g-1
-  nutrient-concentration-in-zooplankton
-  nutrient-concentration-in-fish
+;`@global Global variables
+;`@details There are two parts of global variables, to support environmental and biological settings respectively. 
+;`@code TRUE
+globals [ water-depth ] ; the depth of the lake and the lake is assumed to be flat in bottom
+globals [ water-temperature ]  
+globals [ total-nutrient-concentration ]  ; The assumption is total nutrient and water volumn is constant in the whole system. 
+globals [ global-free-nutrient-concentration ]  ; Variable Nf, nutrient in water: P is mainly evaluated as a nutrient indicator; mg/L
+globals [ nutrient-concentration-in-phytoplankton ]  ; Np, default value= 0.01, g g-1
+globals [ nutrient-concentration-in-zooplankton]
+globals [ nutrient-concentration-in-fish]                                                             ;; time scale  calculated by ticks
+globals [ days ] ; time scale
+globals [ basic-photosynthesis-rate ]                                        ;; function of temperature; generic growing rate, applied on cynaobacteria, diatom and green algae (Goldman, 1974)
+globals [ phytoplankton-size-default ]
+globals [ cyanobacteria-start-amount ]
 
-;; time scale-----------------------------------------------------------------------------------------------------------------------------                                                             ;; time scale  calculated by ticks
-  days
-;; biological function groups------------------------------------------------------------------------------------------------------------
-  ;; PHYTOPLANKTON ;;-------------------------------------------------
-  basic-photosynthesis-rate                                         ;; function of temperature; generic growing rate, applied on cynaobacteria, diatom and green algae (Goldman, 1974)
-  phytoplankton-size-default
-  cyanobacteria-start-amount
-  cyanobacteria-amount                                              ;; cyanobacteria initial agents number
-  diatom-start-amount                                               ;; diatom initial agents number
-  phytopolankton-amount                                                      ;; sum of diatom, cyanobacteria and green algae
-  diatom-amount                                                     ;; keep track of diatom numbers for results
-  greenalgae-start-amount                                           ;; green algae initial agents number
-  greenalgae-amount
-  phytoplankton-concentration                                       ;; biomass of all phytoplankton / volumn of the world / baseline
-  zooplankton-concentration
-  fish-concentration
-  ;; PLANTS ;;
-  macrophyte-start-amount
-  submerged-macrophyte-amount
-  fp-start-amount                                                   ;; floating plant starting amount
-  fp-amount
-  ;; CONSUMERS ;;-----------------------------------------------------
-  zooplankton-start-amount
-  zooplankton-amount
-  planktivore-fish-start-amount                                     ;; planktivore fish initial amount depending on the phase this model is emphasizing on
-  planktivore-fish-amount
-  omnivore-fish-start-amount                                        ;; omnivorous fishes take a large part of fish in Erhai, eating mollusk, snails and plankton as well
-  omnivore-fish-amount
-  herbivore-fish-start-amount                                       ;; herbivore fish eats mainly grass, e.g. grass carp
-  herbivore-fish-amount
-  piscivore-start-amount                                           ;; **piscivore fish is not considered now in Erhai as there is no report stating its significant effect
-  piscivore-amount
-  extinct?
-
-  pf-hunting-rate
-  hf-hunting-rate
-  omf-hunting-rate
-  pisci-hunting-rate
-
-  ;; statistics/ output
-  this-tick-reproduction
-  this-tick-mortality
-  mortality-accumulation-history
-  reproduction-accumulation-history
-]
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;---------------------------------Ecosystem design---------------------------------------------------------------------------------------------------------------------------------
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; create agent sets of biome------------------------------------------------------------------------------------------------------------------
-breed [ cyanobacteria a-cyanobacteria ]
+;`@global Breeds
+;`@details There are ten breeds.
+;`@code TRUE
+breed [ cyanobacteria a-cyanobacteria ] ; cyanobacteria has special ecological niche
 breed [ diatom a-diatom]
 breed [ greenalgae a-greenalgae ]
 breed [ zooplankton a-zooplankton ]
@@ -74,14 +30,17 @@ breed [ herbivore-fishes herbivore-fish ]
 breed [ omnivore-fishes omni-fish ]
 breed [ piscivores piscivore ]
 
-;; attribute variables of all agents (turtles)---------------------------------------------------------------------------------------------------
+;`@global Agent properties
+;`@details agent breeds have their id variables. 
+;`@details Patches don't have variable tyet.
+;`@code TRUE
 turtles-own [
   last-energy
-  energy                                                            ;; track of individual turtle's living status
+  energy                                                            ; track of individual turtle's living status
   biodensity
-  biomass                                                         ;; dry mass, ug
+  biomass                                                         ; dry mass, ug
   BMR                                                               ;basal metabolic rate
-  age                                                               ;; aging process for natural mortality (and maybe different living habitat)
+  age                                                               ; aging process for natural mortality (and maybe different living habitat)
   life-span
   shaded?
   light-attenuation
@@ -89,15 +48,16 @@ turtles-own [
   food
   food-preference
   now-survival-energy
-;  target-prey
   vertical-factor
   growth-rate
   Z
 ]
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;SETUP INITIALS ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; setup and initiation process----------------------------------------------------------------------------------------------------------------------------------------------------------------
+;`@procedure Setup
+;`@details The setup procedure first resets the model.  
+;`@details Depending on the chosen model version, grass patches are initialized.  
+;`@details Finally, agents are created.
+;`@code TRUE
 to setup
   ca
   clear-all-plots
@@ -348,7 +308,11 @@ to breeds_settings
 
 end
 
-;; run life cycles of agents------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+;`@procedure Go
+;`@details This is the main procedure of the model. 
+;`@details It iterates over sheep and wolve agents. 
+;`@details These agents then move, forage and die if they dont have enough energy.
+;`@code TRUE
 to go                                                               ;; ecosystem running cycles we care about!
     set days ticks / 2
     ask turtles [
@@ -361,578 +325,7 @@ to go                                                               ;; ecosystem
     show-existence
     tick
 end
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; ----------------------------biomes' life cycles---------------------------------------------------------------------------------------------------------------------------------------------------------------
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;LIFE LOOP 1: DIATOM AS A CANARY SPECIES (SLOW REPLICATING, WEAK COMPETITIVENESS) ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;LIFE LOOP 2: GREENALGAE AS A KEYSTONE SPECIES (SLOW REPLICATING, BUT STRONG COMPETITIVENESS);;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;LIFE LOOP 3: CYANOBACTERIA AS A WEEDY SPECIES (FAST REPLICATING, BUT WEAK COMPETITIVENESS);;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; can form large inedible colonies whcih makes them less vulnerable to top-down control
 
-to phytoplankton-life
-  ask ( turtle-set diatom greenalgae cyanobacteria ) [
-  repeat 4 [
-  count-amounts
-  phytoplankton-life-strategy
-  phytoplankton-growth
-  phytoplankton-spread
-    ]
-    phytoplankton-spread
-    phytoplankton-reproduction
-    phytoplankton-mortality-decomposition
-  ]
-end
-;----diatom serving functions
-to phytoplankton-life-strategy
-  ;; algae repel each other and spread out
-  ;; phytoplankton-spread
-  ;; optimize the position for growth
-  set light-attenuation exp ( - ( 0.1 * ( ( sum [ biomass ] of diatom + sum [ biomass ] of cyanobacteria + sum [ biomass ] of greenalgae + sum [biomass] of floating-plants) / ( world-width * world-height * water-depth) / 6) * Z / 2 )    )                        ;; Iz = I0 * exp(-Ez)  E light attenuation efficiency, m-1, 0.8 prox from He(2015)
-  set nutrient-availability 1 - exp ( - 0.7 * Z )
-  if any? other turtles-here with [ breed = diatom or breed = cyanobacteria or breed = greenalgae or breed = submerged-macrophytes or breed = floating-plants ] [
-  if [ Z ] of one-of other turtles-here < Z [ set shaded? True ]
-  set light-attenuation light-attenuation * e ^ ( 0.5 - [ count cyanobacteria-here + count diatom-here + count greenalgae-here ] of patch-here / 2)                           ;;shading effects
-    if breed = cyanobacteria [ set light-attenuation light-attenuation * 1.2  ]     ;; shade tolerant and can grow at a higher turbidity than other algae
-  ]
-  phytoplankton-adapt                                          ;; shade, poor nutrient drives phytoplankton move to a better place
-end
-to phytoplankton-adapt                                         ;; phytoplankton move vertically towards the best combination of light and nutrient condition. light is assumed 100% penetrating.
-  set vertical-factor light-attenuation * nutrient-availability
-  if ( any? ( turtle-set diatom greenalgae cyanobacteria ) and vertical-factor < mean [ vertical-factor ] of ( turtle-set diatom greenalgae cyanobacteria ) ) [
-      let best-Z [ Z ] of one-of other ( turtle-set diatom greenalgae cyanobacteria ) with-max [vertical-factor]
-      let past-Z Z
-      set Z ( best-Z - past-Z ) / ( random 2 + 1 ) + past-Z             ;; use up to 3 steps to approach the best factor position
-   ;; check if there is any other older phytoplankon already there in the way
-  if ( vertical-factor = max [ vertical-factor ] of ( turtle-set diatom greenalgae cyanobacteria ) and age < [ age ] of one-of other diatom-here with [ Z = best-Z ] )
-    [ ifelse random 10 = 1
-      [  die
-      count-amounts ]                                          ;; fail to get best position
-      [ set Z past-Z ]                                  ;; wait for a chance in the next round
-    ]
-  ]
-end
-to phytoplankton-growth    ;; idea: all phytoplankton share similar mechanism but
-                           ;;   1) cyanobacteria have more shade tolerance, better ability to optimize their position, cause a higher turbidity per unit of biomass than other algae, and have a lower max production rate and metabolism rate.
-                           ;;   2) diatom can divide more rapidly than other phytoplankton when condition is favourable for growth, can adapt to surviving long periods of nutrient and light limitation, and prevalent in cold waters(Anne-sophie, 2017).
-                           ;;   3) green algae have medium replication rate and environment tolerance.
-  ; photosynthesis
-  count-amounts
-  set growth-rate  basic-photosynthesis-rate * light-attenuation * ( global-free-nutrient-concentration  + 1.4 ) ;; phytoplankton-concentration is calculated
-  ifelse growth-rate < 0 or global-free-nutrient-concentration < 0.01
-    [    set growth-rate 0      ]   ;; stop photosynthesising
-    [
-    if breed = diatom  [set growth-rate growth-rate * ( 0.2 + 0.002 * (water-temperature + 0.7 * water-temperature ^ 2 - water-temperature ^ 3 / 63 ))  ]
-    if breed = greenalgae [set growth-rate growth-rate * ( 0.2 + 0.0016 * (water-temperature + 0.7 * water-temperature ^ 2 - water-temperature ^ 3 / 72 ))  ]
-    if breed = cyanobacteria [set growth-rate growth-rate * ( 0.2 + 0.003 * (water-temperature + 0.26 * water-temperature ^ 2 - water-temperature ^ 3 / 200 ))  ]
-      let dEnergy energy * growth-rate
-      set energy energy + dEnergy
-      set biomass sqrt (e ^( (energy - 300) / 60 ) )
-    ]
-    ;;Metabolism - For benthic animial, Kleiber's law of the 3/4 power law works. Size-scaling of phytoplankton metabolism cannot be predicted by Kleiber’s rule.
-   set energy energy - biomass ^ BMR       ;; benthic 3/4. body-mass 0.1 ~ 100; energy 0.1 ~ 32
-   set biomass sqrt (e ^( (energy - 300) / 60 ) )
-end
-to phytoplankton-spread           ;; These algae have enzymes to repel each other, so they spread out evenly throughout the water
-  if breed = diatom or breed = cyanobacteria or breed = greenalgae and count turtles with [ breed = diatom or breed = cyanobacteria or breed = greenalgae ] > 9
-    [
-      move-to min-one-of neighbors [sum [ biomass ] of diatom + sum [ biomass ] of cyanobacteria + sum [ biomass ] of greenalgae]
-    ]
-end
-
-;; diatom reproduction: Daughter cells are identical to the parent except stock variables like age, energy.
-   ;The reproduction process can occur by either sexual or asexual reproduction. All diatoms pass through a seed-like or a spore phase called the resting spore.
-to phytoplankton-reproduction
-   count-amounts
-   let heir round ( energy / 23.69 )
-   if heir - 1 > 0 [
-   if breed = greenalgae [
-    ifelse energy > 70 - 90  *  global-free-nutrient-concentration
-      [
-        set energy energy / heir   ;; ready to split and reproduce
-        set biomass sqrt ( e ^ ( (energy - 300) / 60 ) )
-         hatch ( heir - 1 )
-             [ lt random 360 fd 1
-               set age 0.5
-               set shaded? False
-               set this-tick-reproduction this-tick-reproduction + 1
-               move-to min-one-of neighbors [ count diatom + count cyanobacteria + count greenalgae ]
-             ]
-      ] [ move-to min-one-of neighbors [count diatom + count cyanobacteria + count greenalgae] ]
-  ]
- if breed = cyanobacteria [
-    ifelse energy > 70 - 90  *  global-free-nutrient-concentration
-      [
-        set energy energy / heir
-         set biomass sqrt ( e ^ ( (energy - 300) / 60 ) )
-         hatch ( heir - 1 )
-             [ lt random 360 fd 1
-               set age 0.5
-               set shaded? False
-               set this-tick-reproduction this-tick-reproduction + 1
-               move-to min-one-of neighbors [ count diatom + count cyanobacteria + count greenalgae]
-             ]
-    ] [  move-to min-one-of neighbors [count diatom + count cyanobacteria + count greenalgae] ]
-  ]
- if breed = diatom [
-    ifelse energy > 70 - 90  *  global-free-nutrient-concentration
-      [
-        set energy energy / heir
-       set biomass sqrt ( e ^ ( (energy - 300) / 60 ) )
-         hatch ( heir - 1 )
-             [ lt random 360 fd 1
-               set age 0.5
-               set shaded? False
-               set this-tick-reproduction this-tick-reproduction + 1
-               move-to min-one-of neighbors [count diatom + count cyanobacteria + count greenalgae]
-             ]
-    ] [  move-to min-one-of neighbors [count diatom + count cyanobacteria + count greenalgae] ]
-  ]
-  ]
-end
-
-to phytoplankton-mortality-decomposition
-   count-amounts
-   set now-survival-energy 23
-   if breed = diatom or breed = greenalgae or breed = cyanobacteria [
-    if ( energy < now-survival-energy  or ( age > life-span and random 1 = 0 ))
-     [
-     set this-tick-mortality  this-tick-mortality + 1
-     die
-     count-amounts
-     ]
-   ]
-end
-
-;; some cyanobacteria can reproduce daughter cells who have more N fix heterocysts, or gas vesicles, depending on what is needed to dominate the lake.
- ;  Daughter cells / spores can be akinetes, which rest on the sediment until a future season, and then all rise up at about the same time to “take over” the lake.
-
-;;;;;;;;;;;;LIFE LOOP 4: SUBMERGED MACROPHYTE ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-to macrophyte-life
-  ask ( turtle-set submerged-macrophytes floating-plants ) [
-  count-amounts
-  repeat 2 [
-   macrophyte-growth
-   macrophyte-reproduction
-    ]
-  plant-mortality
-  ]
-end
-
-to macrophyte-growth
-   count-amounts
-   set growth-rate  basic-photosynthesis-rate * ( global-free-nutrient-concentration  + 1.4 )
-   ifelse growth-rate < 0 or global-free-nutrient-concentration < 0
-    [    set growth-rate 0      ]
-    [
-    if breed = submerged-macrophytes [  set growth-rate growth-rate * ( 0.4 + 0.003 * (water-temperature + 0.7 * water-temperature ^ 2 - water-temperature ^ 3 / 60 ))  ]
-    if breed = floating-plants [ set growth-rate growth-rate * ( 0.4 + 0.004 * (water-temperature + 0.7 * water-temperature ^ 2 - water-temperature ^ 3 / 60 ))  ]
-     ]
-  let dEnergy energy * growth-rate
-  set energy energy + dEnergy
-  set biomass sqrt (e ^ ( (energy - 300) / 60 ) )
-  ;; Metabolism - For benthic animial, Kleiber's law of the 3/4 power law works. Size-scaling of phytoplankton metabolism cannot be predicted by Kleiber’s rule.
-   set energy energy - biomass ^ BMR       ;; benthic 3/4. body-mass 0.1 ~ 100; energy 0.1 ~ 32
-   set biomass sqrt (e ^ ( (energy - 300) / 60 ) )
-   count-amounts
-end
-to macrophyte-reproduction
-   ask submerged-macrophytes [
-     count-amounts
-     if energy > 300 * e ^ (-3 * global-free-nutrient-concentration) and age mod 31 = 30 and sum [ biomass ] of submerged-macrophytes-on neighbors + sum [ biomass ] of floating-plants-on neighbors   < 1000
-      [
-      move-to min-one-of neighbors [ sum [ biomass ] of submerged-macrophytes + sum [ biomass ] of floating-plants]
-        let heir round (energy / 190 )
-        set energy energy / heir
-        set biomass sqrt (e ^ ( (energy - 300) / 60 ) )
-        hatch (heir - 1)  [
-          lt random 360 fd 2
-          set age 0.5
-          set energy energy / heir
-          set biomass sqrt (e ^ ( (energy - 300) / 60 ) )
-        ]
-       ]
-    ]
-   ask floating-plants [
-    count-amounts
-    if ( energy > 150 and ( sum [ biomass ] of submerged-macrophytes-on neighbors + sum [ biomass ] of floating-plants-on neighbors ) < 1140 and age mod 16 = 15) [
-      move-to min-one-of neighbors [ sum [ biomass ] of submerged-macrophytes + sum [ biomass ] of floating-plants]
-      let heir round (energy / 190 )
-      set energy energy / heir
-      hatch (heir - 1) [
-        lt random 360 fd 1
-        set age 0.5
-        set energy energy / heir
-          set biomass sqrt (e ^ ( (energy - 300) / 60 ) )
-       ]
-    ]
-  ]
-end
-
-to plant-mortality
-  if breed = submerged-macrophytes [
-    if energy < 100 or age > life-span
-    [ die
-      count-amounts
-    ]
-  ]
-  if breed = floating-plants [
-    if energy < 100  or age > life-span
-    [ die
-      count-amounts
-    ]
-  ]
-end
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; CONSUMERS ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-to consumer-life
-  ask zooplankton [
-    count-amounts
-    repeat 3 [ zooplankton-seek-food ]
-    excretion
-    zoo-mortality-decomposition
-    zoo-reproduction
-  ]
-  ask ( turtle-set planktivore-fishes omnivore-fishes herbivore-fishes piscivores ) [
-    count-amounts
-    fish-seek-food
-    excretion
-    zoo-mortality-decomposition
-    zoo-reproduction
-  ]
-end
-
-to  zooplankton-seek-food
-   zooplankton-sweep-food-on-patch  ;; have food on spot
-   if energy < 120                  ;; go for better food in neighbors if not full
-     [ if (any? (turtle-set planktivore-fishes omnivore-fishes) in-cone 3 120 ) [ rt 90 ]
-       move-to max-one-of patches in-cone 2 120 [ food-stock-count-here-of "zooplankton" ]
-     ]
-end
-to zooplankton-sweep-food-on-patch
-  let killing-list  turtles-here with [ (breed = greenalgae) or (breed = cyanobacteria) or (breed = diatom) ]
- ;; print killing-list
-  let food-energy sum [ energy ] of killing-list
-  set energy food-energy * 0.1 + energy
-  set  biomass sqrt (e ^ ( (energy - 300) / 60 ) )
-  ask killing-list [ die ]
-end
-
-to-report first-food-choice-here-of [ a ]
-  let x 0   ;; select the richest food around
-  let i 0
-  let j 0
-  if breed = a  [
-    foreach food [
-      name -> set x max (list x food-number-detect name 3 )
-      if x = food-number-detect name 3 [ set j i ]
-      set i i + 1
-    ]
-  ]
-  report item j food
-end
-to-report food-number-detect [ name range-of-patch ]
-  report count turtles with [ breed = name ] in-radius range-of-patch
-end
-to-report food-stock-count-here-of [ identity ]  ;; this is a reporter for patches
-  let turtle-model turtles with [ breed = identity ]
-  let x 0
-  foreach [ food ] of turtle-model
-  [
-    name -> set x x + count turtles-here with [ breed = name ]
-  ]
-  report x
-end
-
-to fish-seek-food
-    let pf  planktivore-fish-amount * pf-hunting-rate
-    let omf omnivore-fish-amount *  omf-hunting-rate
-    let hf   herbivore-fish-amount *  hf-hunting-rate
-    let pisci  piscivore-amount *  pisci-hunting-rate
-
-    if breed = "planktivore-fishes" [
-    repeat pf     [ consumer-predating-as "planktivore-fishes"   ]
-  ]
-    if breed = "omnivore-fishes" [
-    repeat omf    [ consumer-predating-as "omnivore-fishes"   ]
-  ]
-    if breed = "herbivore-fishes" [
-    repeat hf     [ consumer-predating-as "herbivore-fishes"   ]
-  ]
-    if breed = "piscivores" [
-    repeat pisci  [ consumer-predating-as "piscivores"   ]
-  ]
-end
-
-to consumer-predating-as [ identity ]
-   consumers-sweep-food-on-patch identity  ;; sweep food to achieve "ideal free distribution" experiment by Milinsky
-   if energy < 1.2 * ( 60 * ln (biomass ^ 2) + 300 ) [
-      move-to max-one-of patches in-cone 2 120 [ food-stock-count-here-of identity ]
-     ]
-    set biomass sqrt (e ^ ( (energy - 300) / 60 ) )   ;; Assimilate energy intake as excessive biomass
-end
-to  consumers-sweep-food-on-patch [ identity ]
-  let turtle-model turtles with [ breed = identity ]
-  let food-list [ food ] of turtle-model
-  let killing-list turtles-here with [ member? breed food-list ]
-  print killing-list
-  let food-energy sum [ energy ] of killing-list
-  set energy food-energy * 0.1 + energy
-  set  biomass sqrt (e ^ ( (energy - 300) / 60 ) )
-  ask killing-list [ die ]
-end
-
-to ingest [ target ]                                          ;; ingestion doesn't include the movement to predate, so only eat food on the patch
-   let prey one-of turtles-here with [ breed = target ]
-   if prey != nobody
-   [
-   let  energy-from-food [ energy ] of prey * 0.1            ;; assume assimilation rate
-   set  energy energy + energy-from-food
-   set  biomass sqrt (e ^ ( (energy - 300) / 60 ) )
-   ask  prey [ die ]
-  ]
-end
-
-to zoo-reproduction
-   ask zooplankton [
-    if ( energy > 100 and sum [ [ biomass ] of zooplankton ] of neighbors  < 12 )
-    [
-       let heir-number round (energy / 23 )
-       set energy energy / heir-number
-       set biomass sqrt (e ^ ( (energy - 300) / 60 ) )
-        hatch ( heir-number - 1 ) [
-          lt random 360 fd 1
-          set age 0.5
-          set energy energy / heir-number
-          set biomass sqrt (e ^ ( (energy - 300) / 60 ) )
-          set shaded? False
-          set heading random 360
-          fd 1
-          ]
-    ]
-  ]
-   ask planktivore-fishes [
-    if ( energy > 280  and sum [ sum [ biomass ] of planktivore-fishes + sum [ biomass ] of herbivore-fishes + sum [ biomass ] of omnivore-fishes ] of neighbors  < 20) [
-
-      let heir round (energy / 72 )
-      set energy energy / heir
-      set biomass sqrt (e ^ ( (energy - 300) / 60 ) )
-      hatch (heir - 1 ) [
-          lt random 360 fd 2
-          set age 0.5
-          set energy energy / heir
-          set biomass sqrt (e ^ ( (energy - 300) / 60 ) )
-          set shaded? False
-          ]
-      ]
-  ]
-   ask herbivore-fishes [
-      if ( energy > 350  and sum [  sum [ biomass ] of planktivore-fishes + sum [ biomass ] of herbivore-fishes + sum [ biomass ] of omnivore-fishes ] of neighbors < 20 ) [
-
-      let heir round (energy / 72 )
-      set energy energy / heir
-      set biomass sqrt (e ^ ( (energy - 300) / 60 ) )
-     hatch heir - 1  [
-          lt random 360 fd 2
-          set age 0.5
-          set energy energy / heir
-          set biomass sqrt (e ^ ( (energy - 300) / 60 ) )
-          set shaded? False
-          ]
-      ]
-  ]
-   ask omnivore-fishes [
-   if ( energy > 238 + ( sum [  energy ] of herbivore-fishes + sum [ energy ] of planktivore-fishes + sum [ energy ] of omnivore-fishes  ) / ( world-width * world-height * water-depth) * 10  and sum [  sum [ biomass ] of planktivore-fishes + sum [ biomass ] of herbivore-fishes + sum [ biomass ] of omnivore-fishes ] of neighbors  < 20) [
-
-      let heir round (energy / 72 )
-      set energy energy / heir
-      set biomass sqrt (e ^ ( (energy - 300) / 60 ) )
-      hatch (heir - 1 ) [
-          lt random 360 fd 2
-          set age 0.5
-          set energy energy / heir
-          set biomass sqrt (e ^ ( (energy - 300) / 60 ) )
-          set shaded? False
-          ]
-
-      ]
-  ]
-   ask piscivores [
-   if ( energy > 273 + ( sum [ energy ] of piscivores  ) / ( world-width * world-height * water-depth) * 10 ) [
-      let heir round (energy / 72 )
-      set energy energy / heir
-      set biomass sqrt (e ^ ( (energy - 300) / 60 ) )
-      hatch (heir - 1 ) [
-          lt random 360 fd 2
-          set age 0.5
-          set energy energy / heir
-          set biomass sqrt (e ^ ( (energy - 300) / 60 ) )
-          set shaded? False
-          ]
-      ]
-  ]
-end
-
-to excretion
-   ask zooplankton [
-    if energy > 72.34 and random 10 > 2  [ excrete ]
-  ]
-   ask (turtle-set planktivore-fishes herbivore-fishes omnivore-fishes ) [
-    if energy > 238.7  and random 10 > 2 [ excrete ]
-  ]
-   ask piscivores [
-    if energy > 273 and random 10 > 2 [ excrete ]
-  ]
-end
-
-to excrete
-  set energy energy * 0.9   ;; portion of excretion is 0.6 in all assimilation
-  set biomass sqrt (e ^ ( (energy - 300) / 60 ) )
-  count-amounts
-end
-
-to zoo-mortality-decomposition
-  if breed = zooplankton [
-    set now-survival-energy 70
-     if ( energy < now-survival-energy )  or (age > life-span )
-  [
-     set this-tick-mortality  this-tick-mortality + 1
-     die
-     count-amounts
-  ]
-  ]
-  if breed = planktivore-fishes or breed = herbivore-fishes or breed = omnivore-fishes or breed = piscivores [
-    set now-survival-energy  200
-     if ( energy < now-survival-energy )  or (age > life-span)
-    [
-     set this-tick-mortality  this-tick-mortality + 1
-     die
-     count-amounts
-    ]
-  ]
-   if breed = piscivores [
-    set now-survival-energy  200
-     if ( energy < now-survival-energy )  or (age > life-span)
-    [
-     set this-tick-mortality  this-tick-mortality + 1
-     die
-     count-amounts
-    ]
-  ]
-end
-
-to wake-up-seeds ;; referred from TOPOGRAPHIC MICHIGAN ABM
-
-  if cyanobacteria-amount = 0 [ set extinct? lput cyanobacteria extinct? ]
-  if diatom-amount = 0 [  set extinct? lput diatom  extinct?  ]
-  if greenalgae-amount = 0 [ set extinct?  lput greenalgae extinct? ]
-  if submerged-macrophyte-amount = 0 [ set extinct? lput submerged-macrophytes  extinct?  ]
-  if fp-amount = 0 [ set extinct? lput floating-plants  extinct?  ]
-  if zooplankton-amount = 0 [ set extinct? lput zooplankton  extinct?  ]
-  if planktivore-fish-amount = 0 [ set extinct? lput planktivore-fishes extinct?  ]
-  if herbivore-fish-amount = 0 [ set extinct? lput herbivore-fishes  extinct?  ]
-  if omnivore-fish-amount = 0 [ set extinct? lput omnivore-fishes extinct?  ]
-  if piscivore-amount = 0 [ set extinct? lput piscivores extinct?]
-
-  if global-free-nutrient-concentration > 0.15 and empty? extinct? = false [
-    ask patch random-xcor random-ycor [
-      foreach extinct? [ seed -> sprout 1 [  set breed seed  breeds_settings set extinct? remove seed extinct?] ]
-    ]
-  ]
-end
-
-;;''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-;;------------------------------ life function toolkit-------------------------------------------------------------------------------------------
-;;..............................................................................................................................................
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;REPORT, OUTPUT AND COUNTING;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-to count-amounts
-  ;; biological
-  set cyanobacteria-amount count cyanobacteria
-  set diatom-amount count diatom
-  set greenalgae-amount count greenalgae
-  set submerged-macrophyte-amount count submerged-macrophytes
-  set fp-amount count floating-plants
-  set phytopolankton-amount (diatom-amount + greenalgae-amount + cyanobacteria-amount)
-  set zooplankton-amount count zooplankton
-  set planktivore-fish-amount count planktivore-fishes
-  set herbivore-fish-amount count herbivore-fishes
-  set omnivore-fish-amount count omnivore-fishes
-  set piscivore-amount count piscivores
-
-  ;; global environment
-  set phytoplankton-concentration ( sum [ biomass ] of diatom + sum [ biomass ] of cyanobacteria + sum [ biomass ] of greenalgae ) / ( world-width * world-height * water-depth)
-  set zooplankton-concentration ( sum [ biomass ] of zooplankton) / ( world-width * world-height * water-depth)
-  set fish-concentration ( sum [ biomass ] of herbivore-fishes + sum [ biomass ] of planktivore-fishes + sum [ biomass ] of omnivore-fishes + sum [ biomass ] of piscivores  ) / ( world-width * world-height * water-depth)
-  set global-free-nutrient-concentration total-nutrient-concentration - phytoplankton-concentration * nutrient-concentration-in-phytoplankton - zooplankton-concentration * nutrient-concentration-in-zooplankton - fish-concentration * nutrient-concentration-in-fish
-end
-
-to show-existence ;; this function referred to turtlegrass.nlogo
-  ask patches [     set pcolor white   ]
-  ask (turtle-set diatom cyanobacteria greenalgae floating-plants submerged-macrophytes ) [
-   ifelse show-energy?
-    [ set label precision energy 0
-    ifelse energy > now-survival-energy
-          [ set label-color black ]
-          [ set label-color red ]
-    ]
-    [ set label " " ]
-]
- ask (turtle-set zooplankton herbivore-fishes omnivore-fishes planktivore-fishes piscivores ) [
-  ifelse show-energy?
-    [ set label precision energy 0
-      ifelse energy > now-survival-energy
-          [  ]
-          [ set color red ]
-    ]
-    [ set label " " ]
-  ]
-end
-
-to-report mean-net-flux-indi-energy-zooplankton
-  report ( mean [ energy ] of zooplankton - mean [ last-energy] of zooplankton ) ;; mean net flux of energy in zooplankton
-end
-to-report mean-net-flux-indi-energy-greenalgae
-  report ( mean [ energy ] of greenalgae - mean [ last-energy] of greenalgae ) ;
-end
-to-report mean-net-flux-indi-energy-diatom
-  report ( mean [ energy ] of diatom - mean [ last-energy] of diatom )
-end
-to-report mean-net-flux-indi-energy-cyanobacteria
-  report ( mean [ energy ] of cyanobacteria - mean [ last-energy] of cyanobacteria )
-end
-to-report mean-net-flux-indi-energy-fp
-  report ( mean [ energy ] of floating-plants - mean [ last-energy] of floating-plants )
-end
-to-report mean-net-flux-indi-energy-sm
-  report ( mean [ energy ] of submerged-macrophytes - mean [ last-energy] of submerged-macrophytes )
-end
-to-report mean-net-flux-indi-energy-pf
-  report ( mean [ energy ] of planktivore-fishes - mean [ last-energy] of planktivore-fishes )
-end
-to-report mean-net-flux-indi-energy-omf
-  report ( mean [ energy ] of omnivore-fishes - mean [ last-energy] of omnivore-fishes )
-end
-to-report mean-net-flux-indi-energy-hf
-  report ( mean [ energy ] of herbivore-fishes - mean [ last-energy] of herbivore-fishes )
-end
-to-report mean-net-flux-indi-energy-pisci
-  report ( mean [ energy ] of piscivores - mean [ last-energy] of piscivores )
-end
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;EXTRA FUNCTIONS TO PLAY;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;---1. SET REFUGE AREA TO PREVENT FLOATING PLANT OVERGROWING (PRETENT FP CANNOT GROW IN REFUGE BECAUSE OF NET)
-to set-refuge
-  ask patches [
-    if pxcor > 0.2 * max-pxcor and pycor > 0.2 * max-pycor [ set pcolor blue ]
-  ]
-end
-;;---2. SET ADDITIONAL NUTRIENT INJECTED IN WATER BY TIME
-
-;;---3. SET MANIPULATION MIMICING SOME RECOVERY ENGINEERING WORK, E.G. REMOVE SEDIMENT NUTRIENT, PLANT MACROPHYTE, CHANGE FISH COMPOSITION
 @#$#@#$#@
 GRAPHICS-WINDOW
 23
