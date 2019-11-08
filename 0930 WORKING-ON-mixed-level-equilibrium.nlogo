@@ -326,6 +326,32 @@ to go                                                               ;; ecosystem
     tick
 end
 
+---
+title: Embedding ggplot into knitr document fails
+---
+
+We will generate a graphic in the following chunk.
+```{r}
+library(ggplot2)
+
+mtcars_ggplot <-
+  ggplot(mtcars) +
+  aes(x = wt, y = mpg) +
+  geom_point() +
+  stat_smooth()
+```
+
+In-line code is great for things like summary statistics.  The mean miles per gallon for the `mtcars` data set is `r mean(mtcars$mpg)`.
+
+In-line code is not good for graphics, as you know.
+
+Instead, use a chunk.  This will also allow you to control how the graphic is
+rendered in your final document.
+
+```{r show_figure, fig.width = 3, fig.height = 3}
+mtcars_ggplot
+```
+
 @#$#@#$#@
 GRAPHICS-WINDOW
 23
