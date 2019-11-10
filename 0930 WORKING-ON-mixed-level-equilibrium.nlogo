@@ -2,24 +2,41 @@
 ;`@author Yanjie Zhao
 
 ;`@global Global variables
-;`@details There are two parts of global variables, to support environmental and biological settings respectively. 
+;`@details There are two main parts of global variables, to support environmental and biological settings respectively. Firstly, the list of global environmental variables is as below.
 ;`@code TRUE
 globals [ water-depth ] ; the depth of the lake and the lake is assumed to be flat in bottom
 globals [ water-temperature ]  
-globals [ total-nutrient-concentration ]  ; The assumption is total nutrient and water volumn is constant in the whole system. 
-globals [ global-free-nutrient-concentration ]  ; Variable Nf, nutrient in water: P is mainly evaluated as a nutrient indicator; mg/L
-globals [ nutrient-concentration-in-phytoplankton ]  ; Np, default value= 0.01, g g-1
+globals [ total-nutrient-concentration ]  
+globals [ global-free-nutrient-concentration ]  
+globals [ nutrient-concentration-in-phytoplankton ] 
 globals [ nutrient-concentration-in-zooplankton]
-globals [ nutrient-concentration-in-fish]                                                             ;; time scale  calculated by ticks
+globals [ nutrient-concentration-in-fish]                                               
 globals [ days ] ; time scale
-globals [ basic-photosynthesis-rate ]                                        ;; function of temperature; generic growing rate, applied on cynaobacteria, diatom and green algae (Goldman, 1974)
+globals [ basic-photosynthesis-rate ]                          
 globals [ phytoplankton-size-default ]
 globals [ cyanobacteria-start-amount ]
+;`details Biological properties of breeds are:
+;`@code TRUE
+globals [ basic-photosynthesis-rate  ]                         
+globals [ phytoplankton-size-default ]
+globals [ cyanobacteria-start-amount ]
+globals [ cyanobacteria-amount       ]
+globals [
+ ;; PHYTOPLANKTON ;;-------------------------------------------------
+  basic-photosynthesis-rate                           
+  phytoplankton-size-default
+  cyanobacteria-start-amount
+  cyanobacteria-amount                                            
+  diatom-start-amount                                              
+  phytopolankton-amount                                                   
+  diatom-amount                                                    
+  greenalgae-start-amount                                          
+  greenalgae-amount ]
 
 ;`@global Breeds
-;`@details There are ten breeds.
+;`@details There are ten breeds in this model, including three phytoplankton groups, two macrophyte group, four fish groups and zooplankton.
 ;`@code TRUE
-breed [ cyanobacteria a-cyanobacteria ] ; cyanobacteria has special ecological niche
+breed [ cyanobacteria a-cyanobacteria ] 
 breed [ diatom a-diatom]
 breed [ greenalgae a-greenalgae ]
 breed [ zooplankton a-zooplankton ]
@@ -31,16 +48,15 @@ breed [ omnivore-fishes omni-fish ]
 breed [ piscivores piscivore ]
 
 ;`@global Agent properties
-;`@details agent breeds have their id variables. 
-;`@details Patches don't have variable tyet.
+;`@details For each agent, we assigned general physiological and behavioural variables, so we can decide and track how inidividual agents live.
 ;`@code TRUE
 turtles-own [
   last-energy
-  energy                                                            ; track of individual turtle's living status
+  energy                                                           
   biodensity
-  biomass                                                         ; dry mass, ug
-  BMR                                                               ;basal metabolic rate
-  age                                                               ; aging process for natural mortality (and maybe different living habitat)
+  biomass                                                     
+  BMR                                                            
+  age                                                            
   life-span
   shaded?
   light-attenuation
@@ -54,87 +70,23 @@ turtles-own [
 ]
 
 ;`@procedure Setup
-;`@details The setup procedure first resets the model.  
-;`@details Depending on the chosen model version, grass patches are initialized.  
-;`@details Finally, agents are created.
+;`@details The setup procedure initiates and resets the model. First there is a function for parameter initialization, and using those parameters we can create new-born agents. With agents existing in the model, we can start counting and summarising global variables of them.
+;`@details Depending on the parameters we choose, patches representing water body are initialized too.
 ;`@code TRUE
 to setup
   ca
   clear-all-plots
-  initialize-parameters                                             ;; initialize constants of variables
+  initialize-parameters                                           
   create-function-groups
   initialize-variables
-  ;; setup agents' vars based on function groups in Erhai
   output-type "This scope of lake is formed by " output-type world-width output-type " x " output-type world-height output-print " patches."
   output-type "Phytoplankton are initially set in agents of size " output-type phytoplankton-size-default output-print " ."
   output-type "The depth of the lake is set as a constant of " output-type water-depth output-print " m." output-type "Water temperature " output-type water-temperature output-type " celcius degree."
-    ; set-refuge
   show-existence
   reset-ticks
 end
-to initialize-parameters
-  set days 0
-  ;; create agents' initial number---------------------------------------------------------------------------------------------------------
-  set cyanobacteria-start-amount 20
-  set diatom-start-amount 20
-  set greenalgae-start-amount 20
-  set macrophyte-start-amount 10
-  set zooplankton-start-amount 60
-  set phytopolankton-amount (diatom-start-amount + greenalgae-start-amount + cyanobacteria-start-amount)
-  set fp-start-amount 10
-  set planktivore-fish-start-amount 3
-  set herbivore-fish-start-amount 2
-  set omnivore-fish-start-amount 2
-  set piscivore-start-amount 3
-  set extinct? [ ]
-  set phytoplankton-size-default 1
-
-  set pf-hunting-rate 2
-  set hf-hunting-rate 2
-  set omf-hunting-rate 2
-  set pisci-hunting-rate 2
-;; set global environment in lake-----------------------------------------------------------------------------------------------------------------------------------------------
-
-  set water-depth 5
-  set nutrient-concentration-in-phytoplankton 0.1
-  set nutrient-concentration-in-zooplankton 1
-  set nutrient-concentration-in-fish 10
-
-;; initial local setting of patches from gloabl background----------------------------------------------------------------------------------------------------------------------
-  ask patches [
-    set pcolor white
-  ]
-end
-
-to create-function-groups
-  create-cyanobacteria cyanobacteria-start-amount
-  create-diatom diatom-start-amount
-  create-greenalgae greenalgae-start-amount
-  create-zooplankton zooplankton-start-amount
-  create-submerged-macrophytes macrophyte-start-amount
-  create-floating-plants fp-start-amount
-  create-planktivore-fishes planktivore-fish-start-amount
-  create-herbivore-fishes herbivore-fish-start-amount
-  create-omnivore-fishes omnivore-fish-start-amount
-  create-piscivores piscivore-start-amount
-  breeds_settings
-end
-
-to initialize-variables
-  set  cyanobacteria-amount count cyanobacteria
-  set  diatom-amount count diatom
-  set  greenalgae-amount count greenalgae
-  set  zooplankton-amount zooplankton-start-amount
-  set  submerged-macrophyte-amount macrophyte-start-amount
-  set  fp-amount fp-start-amount
-  set  planktivore-fish-amount planktivore-fish-start-amount
-  set  piscivore-amount piscivore-start-amount
-  set  basic-photosynthesis-rate 5.35 * 10 ^ 9 * e ^ ( -6473 / (water-temperature + 273.15) )      ;;~= 2                  ;; from Monod Model and Arrhenius function (Goldman, 1974)
-;; set environment-------------------------------------------------------------------------------------------------------------------------
-  set global-free-nutrient-concentration total-nutrient-concentration
-  set phytoplankton-concentration ( sum [ biomass ] of diatom + sum [ biomass ] of cyanobacteria + sum [ biomass ] of greenalgae ) / ( world-width * world-height * water-depth)
-end
-
+;`@details An important subfunction to mention in the 'create-function-groups' function is 'breeds_settings'. This subfunction decides core properties of breeds, e.g. age, initial energy, basal metabolic rate(BMR) and so on.
+;`@code TRUE
 to breeds_settings
   ask cyanobacteria [
     setxy random-xcor random-ycor
@@ -305,15 +257,13 @@ to breeds_settings
      set food (list "planktivore-fishes" "herbivore-fishes" "omnivore-fishes" )
     set food-preference (list 8 8 8 8 )
     ]
-
 end
 
 ;`@procedure Go
-;`@details This is the main procedure of the model. 
-;`@details It iterates over sheep and wolve agents. 
-;`@details These agents then move, forage and die if they dont have enough energy.
+;`@details This is the main procedure of the running model. 
+;`@details It iterates over agents. These agents then move, forage and die if they dont have enough energy or reach the maximum life span.
 ;`@code TRUE
-to go                                                               ;; ecosystem running cycles we care about!
+to go                                                            
     set days ticks / 2
     ask turtles [
     set last-energy energy
@@ -325,32 +275,6 @@ to go                                                               ;; ecosystem
     show-existence
     tick
 end
-
----
-title: Embedding ggplot into knitr document fails
----
-
-We will generate a graphic in the following chunk.
-```{r}
-library(ggplot2)
-
-mtcars_ggplot <-
-  ggplot(mtcars) +
-  aes(x = wt, y = mpg) +
-  geom_point() +
-  stat_smooth()
-```
-
-In-line code is great for things like summary statistics.  The mean miles per gallon for the `mtcars` data set is `r mean(mtcars$mpg)`.
-
-In-line code is not good for graphics, as you know.
-
-Instead, use a chunk.  This will also allow you to control how the graphic is
-rendered in your final document.
-
-```{r show_figure, fig.width = 3, fig.height = 3}
-mtcars_ggplot
-```
 
 @#$#@#$#@
 GRAPHICS-WINDOW
